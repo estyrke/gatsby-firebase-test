@@ -6,7 +6,6 @@ import Input from '../../../../../atoms/Input';
 import Button from '../../../../../atoms/Button';
 
 const INITIAL_STATE = {
-  username: '',
   email: '',
   passwordOne: '',
   passwordTwo: '',
@@ -61,7 +60,6 @@ class SignUpFormBase extends Component {
 
   render() {
     const {
-      username,
       email,
       passwordOne,
       passwordTwo,
@@ -71,20 +69,10 @@ class SignUpFormBase extends Component {
     const isInvalid =
       passwordOne !== passwordTwo ||
       passwordOne === '' ||
-      email === '' ||
-      username === '';
+      email === '';
 
     return (
       <div>
-        <Input
-          name="username"
-          value={username}
-          onChange={this.onChange}
-          type="text"
-          required={true}
-          labelName="Username"
-        />
-
         <Input
           name="email"
           value={email}
