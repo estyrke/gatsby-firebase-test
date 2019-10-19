@@ -2,6 +2,11 @@ const path = require('path');
 
 const firebase = require('firebase');
 const routes = require('./templates.js');
+
+require("dotenv").config({
+  path: `.env.${process.env.NODE_ENV}`,
+})
+
 const config = require('./firebaseConfig');
 
 exports.createPages = async ({ graphql, actions }) => {
