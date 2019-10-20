@@ -1,74 +1,68 @@
-import React, { Component } from 'react';
-import Input from '../../../../../atoms/Input';
+import React from 'react';
+import useResettableFormReducer from '../../../../../../utils/useResettableFormReducer';
 import Button from '../../../../../atoms/Button';
+import Input from '../../../../../atoms/Input';
 
-class DefaultLoginToggle extends Component {
-  constructor(props) {
-    super(props);
+const INITIAL_STATE = { passwordOne: '', passwordTwo: '' };
 
-    this.state = { passwordOne: '', passwordTwo: '' };
-  }
+const DefaultLoginToggle = ({
+  onlyOneLeft,
+  isEnabled,
+  signInMethod,
+  onLink,
+  onUnlink,
+}) => {
+  const [state, setFields, resetForm] = useResettableFormReducer(INITIAL_STATE);
+  const { passwordOne, passwordTwo } = state;
 
-  onSubmit = event => {
+  const onSubmit = event => {
     event.preventDefault();
 
-    this.props.onLink(this.state.passwordOne);
-    this.setState({ passwordOne: '', passwordTwo: '' });
+    onLink(state.passwordOne);
+    resetForm();
   };
 
-  onChange = event => {
-    this.setState({ [event.target.name]: event.target.value });
+  const onChange = event => {
+    setFields({ [event.target.name]: event.target.value });
   };
 
-  render() {
-    const {
-      onlyOneLeft,
-      isEnabled,
-      signInMethod,
-      onUnlink,
-    } = this.props;
+  const isInvalid = passwordOne !== passwordTwo || passwordOne === '';
 
-    const { passwordOne, passwordTwo } = this.state;
+  return isEnabled ? (
+    <button
+      type="button"
+      onClick={() => onUnlink(signInMethod.id)}
+      disabled={onlyOneLeft}
+    >
+      Deactivate {signInMethod.id}
+    </button>
+  ) : (
+    <form onSubmit={onSubmit}>
+      <Input
+        name="passwordOne"
+        value={passwordOne}
+        onChange={onChange}
+        type="password"
+        labelName="New password"
+        required
+      />
+      <Input
+        name="passwordTwo"
+        value={passwordTwo}
+        onChange={onChange}
+        type="password"
+        labelName="Confirm New password"
+        required
+      />
 
-    const isInvalid =
-      passwordOne !== passwordTwo || passwordOne === '';
-
-    return isEnabled ? (
-      <button
-        type="button"
-        onClick={() => onUnlink(signInMethod.id)}
-        disabled={onlyOneLeft}
-      >
-        Deactivate {signInMethod.id}
-      </button>
-    ) : (
-      <form onSubmit={this.onSubmit}>
-        <Input
-          name="passwordOne"
-          value={passwordOne}
-          onChange={this.onChange}
-          type="password"
-          labelName="New password"
-          required
-        />
-        <Input
-          name="passwordTwo"
-          value={passwordTwo}
-          onChange={this.onChange}
-          type="password"
-          labelName="Confirm New password"
-          required
-        />
-
-        <Button
-          disabled={isInvalid}
-          type="submit"
-          onClick={this.onSubmit}
-          text={`Link ${signInMethod.id}`}
-        />
-      </form>
-    );
-  }
-}
+      <Button
+        disabled={isInvalid}
+        type="submit"
+        onClick={onSubmit}
+        text={`Link ${signInMethod.id}`}
+      />
+    </form>
+  );
+};
 
 export default DefaultLoginToggle;

@@ -1,13 +1,13 @@
-import React, { Component } from 'react';
-
-import { withFirebase } from '../../../../../utils/Firebase';
-import SocialLoginToggle from './atoms/SocialLoginToggle';
+import React, { useState } from 'react';
 import {
-  FaGithub,
   FaFacebookF,
+  FaGithub,
   FaGoogle,
   FaTwitter,
 } from 'react-icons/fa';
+import { useFirebase } from '../../../../../utils/Firebase';
+import { useAuthUser } from '../../../../../utils/Session';
+import SocialLoginToggle from './atoms/SocialLoginToggle';
 
 const SIGN_IN_METHODS = [
   {
@@ -36,88 +36,66 @@ const SIGN_IN_METHODS = [
   },
 ];
 
-class LoginManagement extends Component {
-  _initFirebase = false;
+const LoginManagement = props => {
+  const [activeSignInMethods, setActiveSignInMethods] = useState([]);
+  const [error, setError] = useState(null);
 
-  constructor(props) {
-    super(props);
+  const authUser = useAuthUser();
 
-    this.state = {
-      activeSignInMethods: [],
-      error: null,
-    };
-  }
-
-  firebaseInit = () => {
-    if (this.props.firebase && !this._initFirebase) {
-      this._initFirebase = true;
-
-      this.fetchSignInMethods();
-    }
+  const fetchSignInMethods = (firebase) => {
+    firebase.auth
+      .fetchSignInMethodsForEmail(authUser.email)
+      .then(activeSignInMethods => {
+        setActiveSignInMethods(activeSignInMethods);
+        setError(null);
+      })
+      .catch(error => setError(error));
   };
 
-  componentDidMount() {
-    this.firebaseInit();
-  }
+  const firebase = useFirebase(fetchSignInMethods);
 
-  componentDidUpdate() {
-    this.firebaseInit();
-  }
-
-  fetchSignInMethods = () => {
-    this.props.firebase.auth
-      .fetchSignInMethodsForEmail(this.props.authUser.email)
-      .then(activeSignInMethods =>
-        this.setState({ activeSignInMethods, error: null }),
-      )
-      .catch(error => this.setState({ error }));
+  const onSocialLoginLink = provider => {
+    firebase.auth.currentUser
+      .linkWithPopup(firebase[provider])
+      .then(fetchSignInMethods)
+      .catch(error => setError(error));
   };
 
-  onSocialLoginLink = provider => {
-    this.props.firebase.auth.currentUser
-      .linkWithPopup(this.props.firebase[provider])
-      .then(this.fetchSignInMethods)
-      .catch(error => this.setState({ error }));
-  };
-
-  onUnlink = providerId => {
-    this.props.firebase.auth.currentUser
+  const onUnlink = providerId => {
+    firebase.auth.currentUser
       .unlink(providerId)
-      .then(this.fetchSignInMethods)
-      .catch(error => this.setState({ error }));
+      .then(fetchSignInMethods)
+      .catch(error => setError(error));
   };
 
-  render() {
-    const { activeSignInMethods, error } = this.state;
-    const { className } = this.props;
+  const { className } = props;
 
-    return (
-      <div className={className}>
-        <p>Sign In Methods</p>
-        <div>
-          {SIGN_IN_METHODS.map(signInMethod => {
-            const onlyOneLeft = activeSignInMethods.length === 1;
-            const isEnabled = activeSignInMethods.includes(
-              signInMethod.id,
-            );
+  return (
+    <div className={className}>
+      <p>Sign In Methods</p>
+      <div>
+        {SIGN_IN_METHODS.map(signInMethod => {
+          const onlyOneLeft = activeSignInMethods.length === 1;
+          const isEnabled = activeSignInMethods.includes(
+            signInMethod.id,
+          );
 
-            return (
-              <div key={signInMethod.id}>
-                <SocialLoginToggle
-                  onlyOneLeft={onlyOneLeft}
-                  isEnabled={isEnabled}
-                  signInMethod={signInMethod}
-                  onLink={this.onSocialLoginLink}
-                  onUnlink={this.onUnlink}
-                />
-              </div>
-            );
-          })}
-        </div>
-        {error && error.message}
+          return (
+            <div key={signInMethod.id}>
+              <SocialLoginToggle
+                onlyOneLeft={onlyOneLeft}
+                isEnabled={isEnabled}
+                signInMethod={signInMethod}
+                onLink={onSocialLoginLink}
+                onUnlink={onUnlink}
+              />
+            </div>
+          );
+        })}
       </div>
-    );
-  }
-}
+      {error && error.message}
+    </div>
+  );
+};
 
-export default withFirebase(LoginManagement);
+export default LoginManagement;

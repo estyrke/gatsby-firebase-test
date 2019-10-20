@@ -1,6 +1,6 @@
-import React, { Component } from 'react';
-
-import { withFirebase } from '../../../utils/Firebase';
+import React from 'react';
+import { useFirebase } from '../../../utils/Firebase';
+import useResettableFormReducer from '../../../utils/useResettableFormReducer';
 import PasswordChangeForm from './molecules/PasswordChangeForm';
 
 const INITIAL_STATE = {
@@ -9,51 +9,43 @@ const INITIAL_STATE = {
   error: null,
 };
 
-class PasswordChange extends Component {
-  constructor(props) {
-    super(props);
+const PasswordChange = ({ className }) => {
+  const [state, setFields, resetForm] = useResettableFormReducer(
+    INITIAL_STATE,
+  );
+  const { passwordOne, passwordTwo, error } = state;
+  const firebase = useFirebase();
 
-    this.state = { ...INITIAL_STATE };
-  }
-
-  onSubmit = event => {
-    const { passwordOne } = this.state;
-
-    this.props.firebase
+  const onSubmit = event => {
+    firebase
       .doPasswordUpdate(passwordOne)
       .then(() => {
-        this.setState({ ...INITIAL_STATE });
+        resetForm();
       })
       .catch(error => {
-        this.setState({ error });
+        setFields({ error });
       });
 
     event.preventDefault();
   };
 
-  onChange = event => {
-    this.setState({ [event.target.name]: event.target.value });
+  const onChange = event => {
+    setFields({ [event.target.name]: event.target.value });
   };
 
-  render() {
-    const { passwordOne, passwordTwo, error } = this.state;
-    const { className } = this.props;
+  const isInvalid = passwordOne !== passwordTwo || passwordOne === '';
 
-    const isInvalid =
-      passwordOne !== passwordTwo || passwordOne === '';
+  return (
+    <PasswordChangeForm
+      className={className}
+      passwordOne={passwordOne}
+      passwordTwo={passwordTwo}
+      error={error}
+      isInvalid={isInvalid}
+      onSubmit={onSubmit}
+      onChange={onChange}
+    />
+  );
+};
 
-    return (
-      <PasswordChangeForm
-        className={className}
-        passwordOne={passwordOne}
-        passwordTwo={passwordTwo}
-        error={error}
-        isInvalid={isInvalid}
-        onSubmit={e => this.onSubmit(e)}
-        onChange={e => this.onChange(e)}
-      />
-    );
-  }
-}
-
-export default withFirebase(PasswordChange);
+export default PasswordChange;

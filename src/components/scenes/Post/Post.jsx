@@ -1,67 +1,34 @@
-import React, { Component } from 'react';
-import { withFirebase } from '../../../utils/Firebase';
+import React from 'react';
+import { useFirebase } from '../../../utils/Firebase';
 
-class Post extends Component {
-  _initFirebase = false;
+const Post = ({ isLoaded, title, description }) => {
+  const [loading, setLoading] = useState(true);
+  const [post, setPost] = useState(null);
 
-  state = {
-    post: null,
-    loading: true,
-  };
-
-  firebaseInit = () => {
-    if (this.props.firebase && !this._initFirebase) {
-      this._initFirebase = true;
-
-      this.getPost();
-    }
-  };
-
-  componentDidMount() {
-    const { isLoaded } = this.props;
-    if (!isLoaded) {
-      this.firebaseInit();
-    }
-  }
-
-  componentDidUpdate() {
-    const { isLoaded } = this.props;
-    if (!isLoaded) {
-      this.firebaseInit();
-    }
-  }
-
-  getPost = () => {
-    const { firebase, title } = this.props;
-
+  const getPost = (firebase) => {
     firebase
       .post({ title })
       .get()
       .then(result => {
-        this.setState({
-          post: result.docs[0].data(),
-          loading: false,
-        });
+        setPost(result.docs[0].data());
+        setLoading(false);
       });
   };
 
-  render() {
-    const { loading, post } = this.state;
-    const { isLoaded, title, description } = this.props;
+  useFirebase(getPost);
 
-    const finalDescription = isLoaded
-      ? description
-      : post && post.description;
+  const finalDescription = isLoaded
+    ? description
+    : post && post.description;
 
-    if (!isLoaded && loading) return null;
+  if (!isLoaded && loading) return null;
 
-    return (
-      <div className="post container">
-        <h1>{title}</h1>
-        <div>{finalDescription}</div>
-      </div>
-    );
-  }
-}
+  return (
+    <div className="post container">
+      <h1>{title}</h1>
+      <div>{finalDescription}</div>
+    </div>
+  );
+};
 
-export default withFirebase(Post);
+export default Post;

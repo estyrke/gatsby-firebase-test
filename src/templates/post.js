@@ -1,25 +1,23 @@
-import React, { Component } from 'react';
-import Layout from '../utils/layout';
+import React from 'react';
 import PostBase from '../components/scenes/Post/Post';
+import Layout from '../utils/layout';
 
-export class Post extends Component {
-  render() {
-    const {
-      pageContext: { title, description },
-    } = this.props;
+export const Post = props => {
+  const {
+    pageContext: { title, description },
+  } = props;
 
-    const isLoaded = this.props['*'] === title;
+  const isLoaded = props['*'] === title;
 
-    return (
-      <Layout>
-        <PostBase
-          title={isLoaded ? title : this.props['*']}
-          description={description}
-          isLoaded={isLoaded}
-        />
-      </Layout>
-    );
-  }
-}
+  return (
+    <Layout>
+      <PostBase
+        title={isLoaded ? title : props['*']}
+        description={description}
+        isLoaded={isLoaded}
+      />
+    </Layout>
+  );
+};
 
 export default Post;

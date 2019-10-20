@@ -1,11 +1,8 @@
-import React, { Component } from 'react';
-
 import { navigate } from 'gatsby';
-
-import { withFirebase } from '../../../../utils/Firebase';
-import { HOME } from '../../../../constants/routes';
-
+import React, { useState } from 'react';
 import { FaGoogle } from 'react-icons/fa';
+import { HOME } from '../../../../constants/routes';
+import { useFirebase } from '../../../../utils/Firebase';
 
 const ERROR_CODE_ACCOUNT_EXISTS =
   'auth/account-exists-with-different-credential';
@@ -17,26 +14,23 @@ const ERROR_MSG_ACCOUNT_EXISTS = `
   your personal account page.
 `;
 
-class SignInGoogle extends Component {
-  constructor(props) {
-    super(props);
+const SignInGoogle = () => {
+  const [error, setError] = useState(null);
+  const firebase = useFirebase();
 
-    this.state = { error: null };
-  }
-
-  onSubmit = event => {
-    this.props.firebase
+  const onSubmit = event => {
+    firebase
       .doSignInWithGoogle()
       .then(socialAuthUser => {
         // Create a user in your Firebase Realtime Database too
-        return this.props.firebase.user(socialAuthUser.user.uid).set({
+        return firebase.user(socialAuthUser.user.uid).set({
           username: socialAuthUser.user.displayName,
           email: socialAuthUser.user.email,
-          roles: {},
+          roles: [],
         });
       })
       .then(() => {
-        this.setState({ error: null });
+        setError(null);
         navigate(HOME);
       })
       .catch(error => {
@@ -44,28 +38,24 @@ class SignInGoogle extends Component {
           error.message = ERROR_MSG_ACCOUNT_EXISTS;
         }
 
-        this.setState({ error });
+        setError(error);
       });
 
     event.preventDefault();
   };
 
-  render() {
-    const { error } = this.state;
+  return (
+    <form
+      className="login__content__providers__item login__content__providers__item--google"
+      onSubmit={onSubmit}
+    >
+      <button type="submit">
+        <FaGoogle />
+      </button>
 
-    return (
-      <form
-        className="login__content__providers__item login__content__providers__item--google"
-        onSubmit={this.onSubmit}
-      >
-        <button type="submit">
-          <FaGoogle />
-        </button>
+      {error && <p>{error.message}</p>}
+    </form>
+  );
+};
 
-        {error && <p>{error.message}</p>}
-      </form>
-    );
-  }
-}
-
-export default withFirebase(SignInGoogle);
+export default SignInGoogle;

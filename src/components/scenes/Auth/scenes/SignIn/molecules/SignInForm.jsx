@@ -1,10 +1,8 @@
-import React, { Component } from 'react';
-
 import { navigate } from 'gatsby';
-
-import { withFirebase } from '../../../../../utils/Firebase';
-import { HOME } from '../../../../../constants/routes';
+import React from 'react';
+import useResettableFormReducer from '../../../../../../utils/useResettableFormReducer';
 import Button from '../../../../../atoms/Button';
+import { HOME } from '../../../../../constants/routes';
 
 const INITIAL_STATE = {
   email: '',
@@ -12,91 +10,68 @@ const INITIAL_STATE = {
   error: null,
 };
 
-class SignInForm extends Component {
-  constructor(props) {
-    super(props);
+const SignInForm = () => {
+  const [state, setFields, resetForm] = useResettableFormReducer(
+    INITIAL_STATE,
+  );
+  const { email, password, error } = state;
 
-    this.state = { ...INITIAL_STATE };
-  }
+  const firebase = useFirebase();
 
-  firebaseInit = () => {
-    if (this.props.firebase && !this._initFirebase) {
-      this._initFirebase = true;
-
-      this.initialRequest();
-    }
-  };
-
-  initialRequest = () => {};
-
-  componentDidMount() {
-    this.firebaseInit();
-  }
-
-  componentDidUpdate() {
-    this.firebaseInit();
-  }
-
-  onSubmit = event => {
-    const { email, password } = this.state;
-
-    this.props.firebase
+  const onSubmit = event => {
+    firebase
       .doSignInWithEmailAndPassword(email, password)
       .then(() => {
-        this.setState({ ...INITIAL_STATE });
+        resetForm();
         navigate(HOME);
       })
       .catch(error => {
-        this.setState({ error });
+        setFields({ error });
       });
 
     event.preventDefault();
   };
 
-  onChange = event => {
-    this.setState({ [event.target.name]: event.target.value });
+  const onChange = event => {
+    setFields({ [event.target.name]: event.target.value });
   };
 
-  render() {
-    const { email, password, error } = this.state;
+  const isInvalid = password === '' || email === '';
 
-    const isInvalid = password === '' || email === '';
+  return (
+    <>
+      <form onSubmit={onSubmit}>
+        <div className="group">
+          <input
+            name="email"
+            value={email}
+            onChange={onChange}
+            type="text"
+            required
+          />
+          <span className="highlight" />
+          <span className="bar" />
+          <label>Email</label>
+        </div>
 
-    return (
-      <>
-        <form onSubmit={this.onSubmit}>
-          <div className="group">
-            <input
-              name="email"
-              value={email}
-              onChange={this.onChange}
-              type="text"
-              required
-            />
-            <span className="highlight" />
-            <span className="bar" />
-            <label>Email</label>
-          </div>
+        <div className="group group__password">
+          <input
+            name="password"
+            value={password}
+            onChange={onChange}
+            type="password"
+            required
+          />
+          <span className="highlight" />
+          <span className="bar" />
+          <label>Password</label>
+        </div>
+        <Button type="submit" text="Log in" disabled={isInvalid} />
 
-          <div className="group group__password">
-            <input
-              name="password"
-              value={password}
-              onChange={this.onChange}
-              type="password"
-              required
-            />
-            <span className="highlight" />
-            <span className="bar" />
-            <label>Password</label>
-          </div>
-          <Button type="submit" text="Log in" disabled={isInvalid} />
+        {error && <p>{error.message}</p>}
+      </form>
+    </>
+  );
+};
 
-          {error && <p>{error.message}</p>}
-        </form>
-      </>
-    );
-  }
-}
-
-export default withFirebase(SignInForm);
+export default SignInForm;

@@ -1,11 +1,20 @@
-import React from 'react';
+import React, { useContext, useRef, useEffect } from 'react';
 
 const FirebaseContext = React.createContext(null);
 
-export const withFirebase = Component => props => (
-  <FirebaseContext.Consumer>
-    {firebase => <Component {...props} firebase={firebase} />}
-  </FirebaseContext.Consumer>
-);
+export const useFirebase = callback => {
+  const _initFirebase = useRef(false);
+  const firebase = useContext(FirebaseContext);
+
+  useEffect(() => {
+    if (callback && firebase && !_initFirebase.current) {
+      _initFirebase.current = true;
+
+      return callback(firebase);
+    }
+  });
+
+  return firebase;
+};
 
 export default FirebaseContext;

@@ -1,17 +1,15 @@
-import React, { Component, Fragment } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 
 import Navigation from '../components/molecules/Navigation/Navigation';
 import getFirebase, { FirebaseContext } from './Firebase';
-import withAuthentication from './Session/withAuthentication';
 import SEO from './SEO';
 import '../styles/index.scss';
+import { AuthUserProvider } from './Session';
 
-class Layout extends Component {
-  state = {
-    firebase: null,
-  };
+const Layout = props => {
+  const [firebase, setFirebase] = useState(null);
 
-  componentDidMount() {
+  useEffect(() => {
     const app = import('firebase/app');
     const auth = import('firebase/auth');
     const database = import('firebase/database');
@@ -19,27 +17,25 @@ class Layout extends Component {
     Promise.all([app, auth, database]).then(values => {
       const firebase = getFirebase(values[0]);
 
-      this.setState({ firebase });
+      setFirebase(firebase);
     });
-  }
+  }, []);
 
-  render() {
-    return (
-      <FirebaseContext.Provider value={this.state.firebase}>
-        <AppWithAuthentication {...this.props} />
-      </FirebaseContext.Provider>
-    );
-  }
-}
+  return (
+    <FirebaseContext.Provider value={firebase}>
+      <AppWithAuthentication {...props} />
+    </FirebaseContext.Provider>
+  );
+};
 
-const AppWithAuthentication = withAuthentication(
-  ({ hideNav, seo, children }) => (
+const AppWithAuthentication = ({ hideNav, seo, children }) => (
+  <AuthUserProvider>
     <Fragment>
       <SEO {...seo} />
       {!hideNav && <Navigation />}
       {children}
     </Fragment>
-  ),
+  </AuthUserProvider>
 );
 
 export default Layout;

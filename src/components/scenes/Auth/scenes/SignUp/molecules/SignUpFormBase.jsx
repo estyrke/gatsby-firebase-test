@@ -1,15 +1,15 @@
-import React, { Component } from 'react';
-import { withFirebase } from '../../../../../../utils/Firebase';
-import { HOME } from '../../../../../../constants/routes';
 import { navigate } from 'gatsby';
-import Input from '../../../../../atoms/Input';
+import React from 'react';
+import { HOME } from '../../../../../../constants/routes';
+import { useFirebase } from '../../../../../../utils/Firebase';
+import useResettableFormReducer from '../../../../../../utils/useResettableFormReducer';
 import Button from '../../../../../atoms/Button';
+import Input from '../../../../../atoms/Input';
 
 const INITIAL_STATE = {
   email: '',
   passwordOne: '',
   passwordTwo: '',
-  isAdmin: false,
   error: null,
 };
 
@@ -23,28 +23,26 @@ const ERROR_MSG_ACCOUNT_EXISTS = `
     on your personal account page.
   `;
 
-class SignUpFormBase extends Component {
-  constructor(props) {
-    super(props);
+const SignUpFormBase = () => {
+  const [state, setFields, resetForm] = useResettableFormReducer(
+    INITIAL_STATE,
+  );
+  const { email, passwordOne, passwordTwo, error } = state;
+  const firebase = useFirebase();
 
-    this.state = { ...INITIAL_STATE };
-  }
-
-  onSubmit = event => {
-    const { email, passwordOne } = this.state;
-
-    this.props.firebase
+  const onSubmit = event => {
+    firebase
       .doCreateUserWithEmailAndPassword(email, passwordOne)
       .then(authUser => {
         // Create a user in your Firebase Realtime Database too
-        return this.props.firebase.user(authUser.user.uid).set({
+        return firebase.user(authUser.user.uid).set({
           username: authUser.user.displayName,
           email: authUser.user.email,
-          roles: {},
+          roles: [],
         });
       })
       .then(() => {
-        this.setState({ ...INITIAL_STATE });
+        resetForm();
         navigate(HOME);
       })
       .catch(error => {
@@ -52,74 +50,59 @@ class SignUpFormBase extends Component {
           error.message = ERROR_MSG_ACCOUNT_EXISTS;
         }
 
-        this.setState({ error });
+        setFields({ error });
       });
 
     event.preventDefault();
   };
 
-  onChange = event => {
-    this.setState({ [event.target.name]: event.target.value });
+  const onChange = event => {
+    setFields({ [event.target.name]: event.target.value });
   };
 
-  onChangeCheckbox = event => {
-    this.setState({ [event.target.name]: event.target.checked });
-  };
+  const isInvalid =
+    passwordOne !== passwordTwo || passwordOne === '' || email === '';
 
-  render() {
-    const {
-      email,
-      passwordOne,
-      passwordTwo,
-      error,
-    } = this.state;
+  return (
+    <div>
+      <Input
+        name="email"
+        value={email}
+        onChange={onChange}
+        type="text"
+        required={true}
+        labelName="Email"
+      />
 
-    const isInvalid =
-      passwordOne !== passwordTwo ||
-      passwordOne === '' ||
-      email === '';
+      <Input
+        name="passwordOne"
+        value={passwordOne}
+        onChange={onChange}
+        type="password"
+        required={true}
+        labelName="Password"
+      />
 
-    return (
-      <div>
-        <Input
-          name="email"
-          value={email}
-          onChange={this.onChange}
-          type="text"
-          required={true}
-          labelName="Email"
-        />
+      <Input
+        name="passwordTwo"
+        value={passwordTwo}
+        onChange={onChange}
+        type="password"
+        required={true}
+        labelName="Confirm Password"
+        className="input--no-margin"
+      />
 
-        <Input
-          name="passwordOne"
-          value={passwordOne}
-          onChange={this.onChange}
-          type="password"
-          required={true}
-          labelName="Password"
-        />
+      <Button
+        type="submit"
+        disabled={isInvalid}
+        onClick={onSubmit}
+        text="Sign Up"
+      />
 
-        <Input
-          name="passwordTwo"
-          value={passwordTwo}
-          onChange={this.onChange}
-          type="password"
-          required={true}
-          labelName="Confirm Password"
-          className="input--no-margin"
-        />
+      {error && <p>{error.message}</p>}
+    </div>
+  );
+};
 
-        <Button
-          type="submit"
-          disabled={isInvalid}
-          onClick={this.onSubmit}
-          text="Sign Up"
-        />
-
-        {error && <p>{error.message}</p>}
-      </div>
-    );
-  }
-}
-
-export default withFirebase(SignUpFormBase);
+export default SignUpFormBase;

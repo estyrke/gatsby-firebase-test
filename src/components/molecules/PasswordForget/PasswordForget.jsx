@@ -1,5 +1,6 @@
-import React, { Component } from 'react';
-import { withFirebase } from '../../../utils/Firebase';
+import React from 'react';
+import { useFirebase } from '../../../utils/Firebase';
+import useResettableFormReducer from '../../../utils/useResettableFormReducer';
 import PasswordForgetForm from './atoms/PasswordForgetForm';
 
 const INITIAL_STATE = {
@@ -7,49 +8,43 @@ const INITIAL_STATE = {
   error: null,
 };
 
-class PasswordForget extends Component {
-  constructor(props) {
-    super(props);
+const PasswordForget = ({ className }) => {
+  const [state, setFields, resetForm] = useResettableFormReducer(
+    INITIAL_STATE,
+  );
+  const { email, error } = state;
 
-    this.state = { ...INITIAL_STATE };
-  }
+  const firebase = useFirebase();
 
-  onSubmit = event => {
-    const { email } = this.state;
-
-    this.props.firebase
+  const onSubmit = event => {
+    firebase
       .doPasswordReset(email)
       .then(() => {
-        this.setState({ ...INITIAL_STATE });
+        resetForm();
       })
       .catch(error => {
-        this.setState({ error });
+        setFields({ error });
       });
 
     event.preventDefault();
   };
 
-  onChange = event => {
-    this.setState({ [event.target.name]: event.target.value });
+  const onChange = event => {
+    setFields({ [event.target.name]: event.target.value });
   };
 
-  render() {
-    const { email, error } = this.state;
-    const { className } = this.props;
+  const isInvalid = email === '';
 
-    const isInvalid = email === '';
+  return (
+    <PasswordForgetForm
+      className={className}
+      onSubmit={onSubmit}
+      onChange={onChange}
+      email={email}
+      error={error}
+      isInvalid={isInvalid}
+    />
+  );
+};
 
-    return (
-      <PasswordForgetForm
-        className={className}
-        onSubmit={this.onSubmit}
-        onChange={this.onChange}
-        email={email}
-        error={error}
-        isInvalid={isInvalid}
-      />
-    );
-  }
-}
-
-export default withFirebase(PasswordForget);
+export default PasswordForget;

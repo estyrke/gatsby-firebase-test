@@ -1,26 +1,21 @@
-import React from 'react';
-import { compose } from 'recompose';
-import Layout from '../utils/layout';
 import { graphql } from 'gatsby';
-import {
-  withAuthorization,
-  withEmailVerification,
-} from '../utils/Session';
+import React from 'react';
 import Home from '../components/scenes/Home/Home';
+import Layout from '../utils/layout';
+import { AuthorizationRequired } from '../utils/Session';
 
 const condition = authUser => !!authUser;
-const HomePage = compose(
-  withEmailVerification,
-  withAuthorization(condition),
-)(Home);
+const HomePage = () => (
+  <AuthorizationRequired condition={condition}>
+    <Home />
+  </AuthorizationRequired>
+);
 
-export default () => {
-  return (
-    <Layout>
-      <HomePage />
-    </Layout>
-  );
-};
+export default () => (
+  <Layout>
+    <HomePage />
+  </Layout>
+);
 
 export const query = graphql`
   query HomeSeo {
