@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useFirebase } from '../../../utils/Firebase';
 
-const Post = ({ isLoaded, title, description }) => {
+const Post = ({ isLoaded, id: title, description }) => {
   const [loading, setLoading] = useState(true);
   const [post, setPost] = useState(null);
 

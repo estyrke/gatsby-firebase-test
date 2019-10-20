@@ -14,9 +14,9 @@ const useResettableFormReducer = initialState => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const resetForm = () => dispatch({ type: '__reset' });
   const setFields = fields =>
-    fields
-      .keys()
-      .forEach(k => dispatch({ type: k, value: fields[k] }));
+    Object.keys(fields).forEach(k =>
+      dispatch({ type: k, value: fields[k] }),
+    );
 
   return [state, setFields, resetForm];
 };
